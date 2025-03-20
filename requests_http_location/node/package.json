@@ -1,0 +1,19 @@
+{
+  "name": "nurl",
+  "version": "1.0.0",
+  "main": "index.js",
+  "bin": {
+    "nurl": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "got": "^14.4.6"
+  },
+  "type": "module"
+}

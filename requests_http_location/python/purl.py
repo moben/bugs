@@ -12,7 +12,10 @@ def requote_uri(uri):
 
 
 if __name__ == "__main__":
-    with patch.object(requests.sessions, "requote_uri", requote_uri):
+    with (
+        patch.object(requests.sessions, "requote_uri", requote_uri),
+        patch.object(requests.models, "requote_uri", requote_uri),
+    ):
         print("Wrapping requests", file=sys.stderr)
         requests.get(sys.argv[1], headers={"User-Agent": "requests-patched"})
         print("Unwrapping requests", file=sys.stderr)

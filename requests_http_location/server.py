@@ -10,11 +10,15 @@ ua_paths = defaultdict(set)
 
 # All printable ascii characters correctly quoted if needed
 # + a quoted `~` (tilde), to show the difference between requests and other clients
-valid_redirect_target: Final = f"/v/%7E__-.~__{quote(string.printable)}__"
+valid_redirect_target: Final = f"/v/%7E/-._~/{quote(string.printable)}"
 # all non-whitespace printable ascii characters, unquoted (except `#`, which breaks most clients)
 # + a quoted `~` (tilde), to show the difference between requests and other clients
 # + some invalid percent escape sequences
-invalid_redirect_target: Final = f"/i/%^1%__%%/%7E__-.~__{string.ascii_letters} {string.digits} {string.punctuation.replace('#', '')}__"
+invalid_redirect_target: Final = f"/i/%^1%__%%/%7E/-._~/{string.ascii_letters} {string.digits} {string.punctuation.replace('#', '')}"
+# All printable ascii characters, percent-escaped
+weird_redirect_target: Final = (
+    f"/w/{''.join(f'%{b.encode().hex().upper()}' for b in (string.printable))}"
+)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -55,17 +59,19 @@ class Handler(BaseHTTPRequestHandler):
             return self._redirect(valid_redirect_target)
         elif self.path == "/i":
             return self._redirect(invalid_redirect_target)
-        elif self.path == valid_redirect_target:
-            return self._send_close(HTTPStatus.OK)
+        elif self.path == "/w":
+            return self._redirect(weird_redirect_target)
         else:
-            # In the real world this might be 4xx, but we don't want to deal with
-            # errors in clients and just check the redirection anyway
+            # In the real world this might be distinguish between valid/invalid/weird
+            # and return e.g. 4xx, but we don't want to deal with errors in clients and
+            # only check the redirection anyway
             return self._send_close(HTTPStatus.OK)
 
 
 def main() -> None:
     print(f"{valid_redirect_target=}")
     print(f"{invalid_redirect_target=}")
+    print(f"{weird_redirect_target=}")
 
     port = int(sys.argv[1])
     httpd = HTTPServer(("", port), Handler)
@@ -73,7 +79,7 @@ def main() -> None:
         t = Thread(target=httpd.serve_forever)
         t.start()
         input(f"""
-Request 'http://localhost:{port}/v' or 'http://localhost:{port}/i', following redirects
+Request 'http://localhost:{port}/v', 'http://localhost:{port}/i' or 'http://localhost:{port}/w', following redirects
 
 Press Enter when done to exit...
 """)
